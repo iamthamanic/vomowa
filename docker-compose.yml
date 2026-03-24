@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: vomowa-postgres
+    environment:
+      POSTGRES_USER: vomowa
+      POSTGRES_PASSWORD: vomowa_password
+      POSTGRES_DB: vomowa
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vomowa-network
+
+  # Redis Cache/Queue
+  redis:
+    image: redis:7-alpine
+    container_name: vomowa-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - vomowa-network
+
+  # Backend API
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: vomowa-api
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://vomowa:vomowa_password@postgres:5432/vomowa
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - vomowa-network
+    command: npm run dev
+
+  # Frontend Web
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: vomowa-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - vomowa-network
+    command: npm run dev
+
+  # Python Scraper
+  scraper:
+    build:
+      context: ./scraper
+      dockerfile: Dockerfile
+    container_name: vomowa-scraper
+    environment:
+      - DATABASE_URL=postgresql://vomowa:vomowa_password@postgres:5432/vomowa
+      - API_URL=http://api:3001
+    volumes:
+      - ./scraper:/app
+    depends_on:
+      - postgres
+      - api
+    networks:
+      - vomowa-network
+
+volumes:
+  postgres_data:
+
+networks:
+  vomowa-network:
+    driver: bridge
