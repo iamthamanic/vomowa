@@ -1,0 +1,20 @@
+{
+  "name": "vomowa-bot",
+  "version": "0.1.0",
+  "description": "Telegram bot for vomowa notifications",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "license": "MIT"
+}
